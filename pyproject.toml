@@ -1,0 +1,30 @@
+[project]
+name = "emoha-voice-advisor"
+version = "0.1.0"
+description = "Emoha Voice AI Care Advisor — empathy-tuned voice agent for elder care discovery"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.40.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.6.0",
+    "python-dotenv>=1.0.1",
+    "httpx>=0.27.0",
+    "pipecat-ai[anthropic,cartesia,deepgram,daily,silero]>=0.0.55",
+    "loguru>=0.7.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3.0", "pytest-asyncio>=0.24.0", "ruff>=0.7.0"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

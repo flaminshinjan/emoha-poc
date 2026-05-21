@@ -1,0 +1,48 @@
+# --- Secrets (NEVER commit) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# --- Python ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# --- Node (if a Vite/Next frontend gets added later) ---
+node_modules/
+.next/
+.nuxt/
+.vite/
+
+# --- IDE / OS ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# --- Logs / tmp ---
+*.log
+/tmp/
+.tmp/
+
+# --- Claude / agent session state ---
+.claude/
+
+# --- Fly + Docker build leftovers ---
+fly.toml.bak
+.dockerbuild/
