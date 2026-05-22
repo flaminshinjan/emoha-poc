@@ -308,11 +308,27 @@ HANDLERS: dict[str, Callable[..., dict]] = {
 def dispatch(name: str, conversation_id: str, arguments: dict[str, Any]) -> dict:
     handler = HANDLERS.get(name)
     if handler is None:
-        return {"error": f"unknown tool {name}"}
+        result: dict = {"error": f"unknown tool {name}"}
+    else:
+        try:
+            result = handler(conversation_id=conversation_id, **arguments)
+        except TypeError as e:
+            result = {"error": f"bad arguments for {name}: {e}"}
+
+    # Persist asynchronously so the LLM/TTS path never blocks on DB. Also
+    # re-upsert the conversation snapshot so its mutable fields (risk,
+    # callback, urgency, plan) stay in sync after each tool ran.
     try:
-        return handler(conversation_id=conversation_id, **arguments)
-    except TypeError as e:
-        return {"error": f"bad arguments for {name}: {e}"}
+        from . import db
+        if db.is_enabled():
+            db.fire_and_forget(db.insert_tool_call(conversation_id, name, arguments, result))
+            state = STATE_STORE.get(conversation_id)
+            if state is not None:
+                db.fire_and_forget(db.upsert_conversation(state.to_dict(), None))
+    except Exception:
+        pass
+
+    return result
 
 
 AsyncHandler = Callable[..., Awaitable[dict]]

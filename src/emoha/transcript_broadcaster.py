@@ -43,6 +43,10 @@ class TranscriptBroadcaster(FrameProcessor):
               → transport.output()
     """
 
+    def __init__(self, conversation_id: str | None = None) -> None:
+        super().__init__()
+        self._conversation_id = conversation_id
+
     async def process_frame(self, frame: Frame, direction: FrameDirection) -> None:
         await super().process_frame(frame, direction)
 
@@ -53,14 +57,26 @@ class TranscriptBroadcaster(FrameProcessor):
             text = (frame.text or "").strip()
             if text:
                 await self._broadcast({"role": "caller", "text": text})
+                self._persist("caller", text)
 
         elif isinstance(frame, TTSTextFrame):
             text = (frame.text or "").strip()
             if text:
                 await self._broadcast({"role": "advisor", "text": text})
+                self._persist("advisor", text)
 
         # Always forward — we're a passive observer, not a gate.
         await self.push_frame(frame, direction)
+
+    def _persist(self, role: str, text: str) -> None:
+        if not self._conversation_id:
+            return
+        try:
+            from . import db
+            if db.is_enabled():
+                db.fire_and_forget(db.insert_transcript(self._conversation_id, role, text))
+        except Exception:
+            logger.exception("transcript persist failed")
 
     async def _broadcast(self, payload: dict[str, Any]) -> None:
         message = {"label": _LABEL, **payload}

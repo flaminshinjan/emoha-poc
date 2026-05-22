@@ -231,9 +231,10 @@ async def run_bot(
     # Two broadcaster instances — one before the user aggregator (to catch
     # TranscriptionFrame, which the aggregator consumes), one after TTS (to
     # catch TTSTextFrame which TTS emits). Both push transport messages to
-    # the browser via Daily's app-message channel.
-    caller_broadcaster = TranscriptBroadcaster()
-    bot_broadcaster = TranscriptBroadcaster()
+    # the browser via Daily's app-message channel AND persist the line to
+    # Postgres if a DATABASE_URL is configured.
+    caller_broadcaster = TranscriptBroadcaster(conversation_id=conversation_id)
+    bot_broadcaster = TranscriptBroadcaster(conversation_id=conversation_id)
 
     # Avatar processor sits between TTS and the transport output: it consumes the
     # audio frames TTS emits and produces lip-synced video frames Daily publishes.

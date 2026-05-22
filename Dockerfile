@@ -32,6 +32,7 @@ RUN pip install --upgrade pip && \
       "python-multipart" \
       "loguru>=0.7.2" \
       "aiohttp" \
+      "asyncpg>=0.29" \
       "pipecat-ai[anthropic,cartesia,deepgram,daily,silero]"
 
 # App source

@@ -196,6 +196,15 @@ async def avatar_session(req: AvatarSessionRequest | None = None):
     bot_token = await mint_token(room_name, user_name="Emoha Care Advisor", is_owner=True)
     user_token = await mint_token(room_name, user_name="Caller", is_owner=False)
 
+    # Persist the conversation row up front so transcript + tool inserts
+    # have a parent record. Best-effort: if DB is down we still serve.
+    advisor_slug = (req.advisor_slug if req else None)
+    try:
+        from . import db
+        await db.upsert_conversation(state.to_dict(), advisor_slug)
+    except Exception as e:
+        logger.warning(f"emoha db upsert (session start) failed: {e}")
+
     from .pipecat_bot import run_bot
 
     asyncio.create_task(run_bot(room_url=room_url, token=bot_token, conversation_id=cid))
@@ -292,6 +301,43 @@ async def voice_select(req: VoiceSelectRequest):
 async def voice_delete(persona: str):
     REGISTRY.remove(persona)
     return {"ok": True, "active_persona": REGISTRY.active_persona}
+
+
+# --- persisted conversation read endpoints (Postgres) ---
+
+
+@app.on_event("startup")
+async def _db_startup():
+    from . import db
+    if db.is_enabled():
+        await db.get_pool()  # eager-init the pool so first request is fast
+
+
+@app.on_event("shutdown")
+async def _db_shutdown():
+    from . import db
+    await db.close_pool()
+
+
+@app.get("/admin/conversations")
+async def admin_list_conversations(limit: int = 50):
+    """List recent conversations stored in Postgres. Returns 503 if DB off."""
+    from . import db
+    if not db.is_enabled():
+        raise HTTPException(503, "DATABASE_URL not configured — persistence disabled")
+    return {"conversations": await db.list_conversations(limit=limit)}
+
+
+@app.get("/admin/conversations/{conversation_id}")
+async def admin_get_conversation(conversation_id: str):
+    """Full conversation: stored state + transcript + tool-call audit trail."""
+    from . import db
+    if not db.is_enabled():
+        raise HTTPException(503, "DATABASE_URL not configured — persistence disabled")
+    record = await db.fetch_conversation(conversation_id)
+    if record is None:
+        raise HTTPException(404, "conversation not found in db")
+    return record
 
 
 @app.get("/state/{conversation_id}")
