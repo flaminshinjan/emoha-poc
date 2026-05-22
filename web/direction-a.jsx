@@ -19,7 +19,7 @@ function DirectionA({ density = "roomy", insightVisible = true, avatarShape = "s
     prompt: "",
   });
   const [briefStep, setBriefStep] = React.useState(0);
-  const [advisor, setAdvisor] = React.useState("raj");
+  const [advisor, setAdvisor] = React.useState("soumyajit");
   const [conversationId, setConversationId] = React.useState(null);
   const [clonedPersonas, setClonedPersonas] = React.useState({}); // { slug: voiceMeta }
 
@@ -126,14 +126,14 @@ function ALanding({ go }) {
             margin: "26px 0 36px", maxWidth: 480,
             fontSize: 16, lineHeight: 1.6, color: "var(--ink-soft)",
           }}>
-            Have an honest, unhurried conversation with Raj — our care advisor.
+            Have an honest, unhurried conversation with Soumyajit — our care advisor.
             He'll help you think through what's happening, what feels heavy, and what kind
             of support might fit. There is nothing to buy on this call.
           </p>
 
           <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
             <button className="btn-primary btn-hover" onClick={() => go("brief")}>
-              Talk with Raj
+              Talk with Soumyajit
             </button>
             <button className="btn-ghost btn-hover" onClick={() => go("brief")}>
               <span style={{ opacity: 0.7, marginRight: 6 }}>About 10 minutes</span>
@@ -144,7 +144,7 @@ function ALanding({ go }) {
 
           <div style={{ marginTop: 56, display: "flex", gap: 40, color: "var(--ink-soft)", fontSize: 13 }}>
             <ALandingPoint num="01" t="Tell us a little about your parent" />
-            <ALandingPoint num="02" t="Speak with Raj, one-to-one" />
+            <ALandingPoint num="02" t="Speak with Soumyajit, one-to-one" />
             <ALandingPoint num="03" t="Receive a written care summary" />
           </div>
         </div>
@@ -156,14 +156,14 @@ function ALanding({ go }) {
             boxShadow: "var(--shadow)",
             border: "1px solid rgba(0,0,0,0.04)",
           }}>
-            <AvatarPortrait name="Raj" />
+            <AvatarPortrait name="Soumyajit" />
             <div style={{
               position: "absolute", left: 0, right: 0, bottom: 0,
               padding: "22px 26px",
               background: "linear-gradient(0deg, rgba(20,30,28,0.72) 0%, transparent 100%)",
               color: "#f7f2e6",
             }}>
-              <div className="serif" style={{ fontSize: 28, lineHeight: 1.1 }}>Raj</div>
+              <div className="serif" style={{ fontSize: 28, lineHeight: 1.1 }}>Soumyajit</div>
               <div style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>
                 Senior Care Advisor · with Emoha since 2019
               </div>
@@ -233,7 +233,7 @@ function ABrief({ brief, setBrief, step, setStep, go }) {
           <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
             <button onClick={() => go("advisor")} className="btn-hover"
               style={{ color: "var(--ink-mute)", fontSize: 14, padding: "10px 14px" }}>
-              Skip — Raj will ask
+              Skip — Soumyajit will ask
             </button>
             <button className="btn-primary btn-hover" onClick={next}>
               {step === total - 1 ? "Continue" : "Next"}  →
@@ -467,7 +467,7 @@ function CloneTile({ advisor, onCloned, clonedPersonas }) {
           try { msg = (await r.text()) || msg; } catch (_) {}
         }
         if (r.status === 402) {
-          throw new Error("Voice cloning requires a paid Cartesia plan. Upgrade at play.cartesia.ai/subscription, or skip this and Raj will speak in his default voice.");
+          throw new Error("Voice cloning requires a paid Cartesia plan. Upgrade at play.cartesia.ai/subscription, or skip this and Soumyajit will speak in his default voice.");
         }
         throw new Error(msg);
       }
@@ -1235,7 +1235,7 @@ function ASummary({ brief, conversationId, go }) {
             With warmth,
           </div>
           <div className="serif" style={{ fontSize: 28, marginTop: 4, color: "var(--ink)" }}>
-            Raj
+            Soumyajit
           </div>
           <div className="mono" style={{ fontSize: 10, letterSpacing: "0.18em", color: "var(--ink-mute)", marginTop: 10, textTransform: "uppercase" }}>
             on behalf of the Emoha team

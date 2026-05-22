@@ -4,7 +4,7 @@
 */
 
 // ---------------- Avatar portrait (placeholder for the Tavus video) ----------------
-function AvatarPortrait({ speaking = false, name = "Priya", tint = "warm" }) {
+function AvatarPortrait({ speaking = false, name = "Soumyajit", tint = "warm" }) {
   // A subtle SVG silhouette that suggests a person without being literal.
   const skin = tint === "warm" ? "#d4a47e" : "#c9a48a";
   return (
@@ -161,11 +161,11 @@ const BRIEF_STEPS = [
     ]},
   { id: "conditions", q: "Anything ongoing health-wise?", kind: "chips",
     options: ["Diabetes", "Blood pressure", "Heart", "Joint pain", "Memory", "Recent surgery", "None right now"]},
-  { id: "prompt", q: "What made you reach out today?", placeholder: "It's okay to be brief — Priya will follow up gently.", kind: "textarea" },
+  { id: "prompt", q: "What made you reach out today?", placeholder: "It's okay to be brief — Soumyajit will follow up gently.", kind: "textarea" },
 ];
 
 const ADVISORS = [
-  { slug: "raj", name: "Raj", role: "Calm, grounded", desc: "Best for when you need someone to listen first.", color: "#3b6a63" },
+  { slug: "soumyajit", name: "Soumyajit", role: "Calm, grounded", desc: "Best for when you need someone to listen first.", color: "#3b6a63" },
 ];
 
 // ---------------- Demo transcript snippets (for live call illustration) ----------------
