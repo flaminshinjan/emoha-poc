@@ -20,7 +20,8 @@ from pipecat.adapters.schemas.function_schema import FunctionSchema
 from pipecat.adapters.schemas.tools_schema import ToolsSchema
 from pipecat.audio.vad.silero import SileroVADAnalyzer
 from pipecat.audio.vad.vad_analyzer import VADParams
-from pipecat.frames.frames import EndFrame, TTSSpeakFrame
+from pipecat.frames.frames import BotStoppedSpeakingFrame, EndFrame, Frame, TTSSpeakFrame
+from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
@@ -113,7 +114,35 @@ def _build_tools_schema() -> ToolsSchema:
     return ToolsSchema(standard_tools=fns)
 
 
-async def _register_tools(llm: AnthropicLLMService, conversation_id: str) -> None:
+class _GracefulEnder(FrameProcessor):
+    """Watches for the bot to stop speaking; if `end_requested` is set,
+    signals a fired event so the watcher coroutine can queue EndFrame
+    immediately. Lives in the pipeline so it sees BotStoppedSpeakingFrame
+    as it flows out from TTS / transport."""
+
+    def __init__(self, end_requested: asyncio.Event, fired: asyncio.Event) -> None:
+        super().__init__()
+        self._end_requested = end_requested
+        self._fired = fired
+
+    async def process_frame(self, frame: Frame, direction: FrameDirection) -> None:
+        await super().process_frame(frame, direction)
+        if (
+            isinstance(frame, BotStoppedSpeakingFrame)
+            and self._end_requested.is_set()
+            and not self._fired.is_set()
+        ):
+            # Tiny grace for the last syllable to flush to the wire.
+            await asyncio.sleep(0.4)
+            self._fired.set()
+        await self.push_frame(frame, direction)
+
+
+async def _register_tools(
+    llm: AnthropicLLMService,
+    conversation_id: str,
+    end_requested: asyncio.Event,
+) -> None:
     """Wire every tool through pipecat's function-calling dispatch."""
 
     def make_handler(name: str):
@@ -123,6 +152,9 @@ async def _register_tools(llm: AnthropicLLMService, conversation_id: str) -> Non
             result = await asyncio.to_thread(dispatch, name, conversation_id, args)
             logger.info(f"emoha tool_result cid={conversation_id[:8]} name={name} ok=True")
             await params.result_callback(result)
+            if name == "end_call_gracefully":
+                logger.info(f"emoha graceful end requested cid={conversation_id[:8]}")
+                end_requested.set()
 
         return handler
 
@@ -192,7 +224,10 @@ async def run_bot(
             enable_prompt_caching=True,
         ),
     )
-    await _register_tools(llm, conversation_id)
+    # Tool can flip this Event; the GracefulEnder processor (added below)
+    # then ends the call after the bot's closing utterance finishes.
+    end_requested = asyncio.Event()
+    await _register_tools(llm, conversation_id, end_requested)
 
     tts = CartesiaTTSService(
         api_key=settings.cartesia_api_key,
@@ -236,6 +271,11 @@ async def run_bot(
     caller_broadcaster = TranscriptBroadcaster(conversation_id=conversation_id)
     bot_broadcaster = TranscriptBroadcaster(conversation_id=conversation_id)
 
+    # Detects "bot finished its closing line" so we can fire EndFrame on
+    # the exact right beat after the LLM calls end_call_gracefully.
+    speech_ended = asyncio.Event()
+    graceful_ender = _GracefulEnder(end_requested, speech_ended)
+
     # Avatar processor sits between TTS and the transport output: it consumes the
     # audio frames TTS emits and produces lip-synced video frames Daily publishes.
     stages: list[Any] = [
@@ -246,6 +286,7 @@ async def run_bot(
         llm,
         tts,
         bot_broadcaster,
+        graceful_ender,
     ]
     if avatar:
         stages.append(avatar)
@@ -263,6 +304,22 @@ async def run_bot(
             audio_out_sample_rate=24000,
         ),
     )
+
+    # Watcher coroutine: wait for the tool to flip end_requested, then for
+    # the bot to finish its closing line (precise via BotStoppedSpeakingFrame
+    # in the pipeline), with a 6s safety fallback in case the frame is missed.
+    async def _graceful_end_watcher() -> None:
+        try:
+            await end_requested.wait()
+            logger.info(f"emoha graceful end armed cid={conversation_id[:8]}")
+            try:
+                await asyncio.wait_for(speech_ended.wait(), timeout=6.0)
+                logger.info(f"emoha graceful end via BotStoppedSpeaking cid={conversation_id[:8]}")
+            except asyncio.TimeoutError:
+                logger.warning(f"emoha graceful end via fallback timeout cid={conversation_id[:8]}")
+            await task.queue_frame(EndFrame())
+        except asyncio.CancelledError:
+            pass
 
     participant_joined = asyncio.Event()
 
@@ -301,17 +358,19 @@ async def run_bot(
             pass
 
     watchdog = asyncio.create_task(_watchdog())
+    ender = asyncio.create_task(_graceful_end_watcher())
 
     runner = PipelineRunner()
     logger.info(f"emoha pipecat bot starting conversation_id={conversation_id}")
     try:
         await runner.run(task)
     finally:
-        watchdog.cancel()
-        try:
-            await watchdog
-        except (asyncio.CancelledError, Exception):
-            pass
+        for t in (watchdog, ender):
+            t.cancel()
+            try:
+                await t
+            except (asyncio.CancelledError, Exception):
+                pass
         if aio_session is not None:
             await aio_session.close()
 

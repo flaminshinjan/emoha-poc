@@ -630,6 +630,19 @@ function ACall({ brief, advisor, insightVisible, avatarShape, conversationId, on
 
         call.on("left-meeting", () => { setConnectStatus("ended"); });
 
+        // The bot is allowed to end the call itself (via the
+        // `end_call_gracefully` tool). When the bot leaves the Daily room
+        // we wrap up the local session and navigate to the summary
+        // automatically — no need for the caller to click "End gently".
+        call.on("participant-left", (e) => {
+          if (e?.participant?.local) return;
+          console.log("emoha: bot left the room, auto-navigating to summary");
+          setTimeout(() => {
+            try { call.leave(); } catch (_) {}
+            go("summary");
+          }, 600);
+        });
+
         setConnectStatus("connecting");
         await call.join({ url: session.room_url, token: session.user_token });
         if (!cancelled) setConnectStatus("live");

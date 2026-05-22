@@ -171,6 +171,28 @@ TOOLS: list[dict[str, Any]] = [
             "required": ["stage"],
         },
     },
+    {
+        "name": "end_call_gracefully",
+        "description": (
+            "End the call. Use this when the caller has said goodbye / wants to wrap up, "
+            "OR when you've completed the meaningful work of the call "
+            "(assess_care_risk → recommend_plan → schedule_callback → generate_care_summary) "
+            "and the conversation is naturally finishing. Before calling this, your "
+            "spoken response should already be a short, warm closing line — the system "
+            "waits until you finish speaking, then ends the call so the caller is "
+            "taken to the written summary."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string",
+                    "description": "Brief, internal-only note on why ending now (e.g. 'caller said goodbye', 'plan + callback scheduled').",
+                },
+            },
+            "required": [],
+        },
+    },
 ]
 
 
@@ -293,6 +315,24 @@ def set_stage(conversation_id: str, stage: str) -> dict:
     return {"stage": s.stage.value}
 
 
+def end_call_gracefully(conversation_id: str, reason: str | None = None) -> dict:
+    """Flag the conversation to end after the bot's current utterance finishes.
+
+    The bot pipeline watches this flag via the `should_end` event passed to
+    each tool dispatcher; it lets the closing TTS play out, then queues an
+    EndFrame to leave the Daily room. The browser detects the bot leaving
+    and auto-navigates to the summary.
+    """
+    s = _state(conversation_id)
+    s.stage = Stage.HANDOFF
+    s.escalation = s.escalation  # no change; just keep shape stable
+    return {
+        "ok": True,
+        "ending": True,
+        "reason": reason or "natural wrap-up",
+    }
+
+
 HANDLERS: dict[str, Callable[..., dict]] = {
     "update_emotional_state": update_emotional_state,
     "assess_care_risk": assess_care_risk,
@@ -302,6 +342,7 @@ HANDLERS: dict[str, Callable[..., dict]] = {
     "escalate_to_human_immediately": escalate_to_human_immediately,
     "generate_care_summary": generate_care_summary,
     "set_stage": set_stage,
+    "end_call_gracefully": end_call_gracefully,
 }
 
 
