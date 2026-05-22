@@ -478,3 +478,75 @@ input, textarea, select {
     max-height: 60vh !important;
   }
 }
+
+/* ============================================================
+   PDF / PRINT STYLING
+   ============================================================
+   Both `window.print()` (Print button) and html2pdf (Download as PDF)
+   render the page through these rules. html2pdf temporarily applies
+   `@media print` styles by setting `html2pdf__overlay` — but more
+   reliably we tag the summary with id="emoha-summary-printable" and
+   the letterhead as `.emoha-print-letterhead`, both of which we
+   selectively show/hide here.
+
+   When html2pdf captures the element it inherits screen styles, so we
+   also force the letterhead visible via the `.printing` class added
+   right before `html2canvas` runs (handled in JSX via downloadPdf).
+*/
+
+.emoha-print-letterhead {
+  display: none;
+  padding: 14px 0 20px;
+  margin-bottom: 8px;
+  border-bottom: 1.5px solid #1d2a2a;
+  align-items: center;
+  justify-content: space-between;
+}
+.emoha-print-letterhead .lh-brand {
+  display: flex; align-items: center; gap: 12px;
+}
+.emoha-print-letterhead .lh-name {
+  font-size: 22px; font-weight: 500; letter-spacing: -0.01em; color: #1d2a2a;
+}
+.emoha-print-letterhead .lh-tag {
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #57625e; margin-top: 2px;
+}
+.emoha-print-letterhead .lh-meta {
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #57625e;
+}
+
+@media print {
+  /* Page layout */
+  @page { size: A4; margin: 14mm; }
+  html, body { background: #ffffff !important; }
+
+  /* Hide everything except the summary block */
+  body * { visibility: hidden; }
+  #emoha-summary-printable, #emoha-summary-printable * { visibility: visible; }
+  #emoha-summary-printable {
+    position: absolute; left: 0; top: 0; width: 100%;
+  }
+
+  /* Letterhead visible only in print */
+  .emoha-print-letterhead { display: flex !important; }
+
+  /* Cards: remove screen shadows, keep light borders for paper */
+  .card {
+    box-shadow: none !important;
+    background: #fbf8f1 !important;
+    border: 1px solid rgba(0,0,0,0.08) !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Drop noisy interactive bits */
+  button { display: none !important; }
+}
+
+/* When html2pdf is capturing, the JSX flips this on so the letterhead
+   shows up in the PDF (html2canvas only uses screen styles). */
+.emoha-pdf-capturing .emoha-print-letterhead {
+  display: flex !important;
+}

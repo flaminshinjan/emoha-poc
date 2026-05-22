@@ -4,9 +4,9 @@
 */
 
 // ---------------- Avatar portrait (placeholder for the Tavus video) ----------------
+// Male silhouette — short hair, no earrings, slight stubble shading.
 function AvatarPortrait({ speaking = false, name = "Soumyajit", tint = "warm" }) {
-  // A subtle SVG silhouette that suggests a person without being literal.
-  const skin = tint === "warm" ? "#d4a47e" : "#c9a48a";
+  const skin = tint === "warm" ? "#c79474" : "#b88a6c";
   return (
     <div className="avatar-still">
       <div className="speak-ring" style={{ borderRadius: 0 }}></div>
@@ -14,34 +14,42 @@ function AvatarPortrait({ speaking = false, name = "Soumyajit", tint = "warm" })
         <svg viewBox="0 0 200 260" preserveAspectRatio="xMidYMax slice">
           <defs>
             <linearGradient id={`hair-${name}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#2c1f1a" />
-              <stop offset="1" stopColor="#1a120e" />
+              <stop offset="0" stopColor="#2a1d18" />
+              <stop offset="1" stopColor="#160e0a" />
             </linearGradient>
             <linearGradient id={`shoulder-${name}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#dfd3c1" />
-              <stop offset="1" stopColor="#b8a98f" />
+              <stop offset="0" stopColor="#4a5550" />
+              <stop offset="1" stopColor="#2d3631" />
             </linearGradient>
           </defs>
-          {/* shoulders */}
-          <path d="M -10 270 Q 30 200 100 198 Q 170 200 210 270 Z" fill={`url(#shoulder-${name})`} opacity="0.85" />
+          {/* shoulders — broader, squarer for a male frame */}
+          <path d="M -10 270 Q 28 195 100 192 Q 172 195 210 270 Z" fill={`url(#shoulder-${name})`} opacity="0.95" />
+          {/* shirt collar hint */}
+          <path d="M 78 198 Q 100 210 122 198 L 118 210 Q 100 218 82 210 Z" fill="rgba(0,0,0,0.25)" />
           {/* neck */}
-          <rect x="86" y="168" width="28" height="36" rx="10" fill={skin} opacity="0.92" />
-          {/* hair back */}
-          <path d="M 50 100 Q 50 50 100 48 Q 150 50 152 100 L 152 170 Q 130 165 100 165 Q 70 165 48 170 Z" fill={`url(#hair-${name})`} />
-          {/* face */}
-          <ellipse cx="100" cy="120" rx="42" ry="52" fill={skin} />
-          {/* hair front */}
-          <path d="M 58 95 Q 70 60 100 60 Q 132 60 144 96 Q 132 88 118 90 Q 110 72 100 76 Q 88 78 82 92 Q 70 88 58 95 Z" fill={`url(#hair-${name})`} />
-          {/* subtle eyes (closed-ish, gentle) */}
+          <rect x="84" y="164" width="32" height="36" rx="6" fill={skin} opacity="0.95" />
+          {/* face — slightly squarer than the original */}
+          <ellipse cx="100" cy="118" rx="40" ry="50" fill={skin} />
+          {/* short male hair — cropped, not falling past the ears */}
+          <path d="M 60 96
+                   Q 58 64 100 58
+                   Q 142 64 140 96
+                   Q 130 84 100 80
+                   Q 70 84 60 96 Z" fill={`url(#hair-${name})`} />
+          {/* brow accents */}
+          <path d="M 80 110 Q 86 106 92 110" stroke="#2a1d18" strokeWidth="1.6" fill="none" strokeLinecap="round" opacity="0.85" />
+          <path d="M 108 110 Q 114 106 120 110" stroke="#2a1d18" strokeWidth="1.6" fill="none" strokeLinecap="round" opacity="0.85" />
+          {/* eyes (closed-ish, gentle) */}
           <path d="M 82 122 Q 86 126 90 122" stroke="#3a2820" strokeWidth="1.4" fill="none" strokeLinecap="round" />
           <path d="M 110 122 Q 114 126 118 122" stroke="#3a2820" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+          {/* nose hint */}
+          <path d="M 100 130 Q 102 140 100 145" stroke="rgba(60,40,30,0.25)" strokeWidth="1.2" fill="none" strokeLinecap="round" />
           {/* mouth — animated when speaking */}
           <g className={speaking ? "mouth speaking" : "mouth"}>
-            <path d="M 92 146 Q 100 152 108 146" stroke="#7a4032" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+            <path d="M 92 152 Q 100 158 108 152" stroke="#6a3325" strokeWidth="1.8" fill="none" strokeLinecap="round" />
           </g>
-          {/* earrings */}
-          <circle cx="58" cy="138" r="2" fill="#c9a046" />
-          <circle cx="142" cy="138" r="2" fill="#c9a046" />
+          {/* subtle jaw/stubble shading */}
+          <path d="M 75 145 Q 100 168 125 145 Q 100 178 75 145 Z" fill="rgba(40,28,22,0.07)" />
         </svg>
       </div>
     </div>

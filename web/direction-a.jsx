@@ -88,7 +88,6 @@ function AHeader({ screen, go }) {
             {screenLabelA(screen)}
           </span>
         )}
-        <EmergencyButton variant="a" onClick={() => alert("Connecting you to a human advisor in a moment…")} />
       </div>
     </header>
   );
@@ -135,46 +134,47 @@ function ALanding({ go }) {
             <button className="btn-primary btn-hover" onClick={() => go("brief")}>
               Talk with Soumyajit
             </button>
-            <button className="btn-ghost btn-hover" onClick={() => go("brief")}>
-              <span style={{ opacity: 0.7, marginRight: 6 }}>About 10 minutes</span>
-              <span style={{ opacity: 0.4 }}>·</span>
-              <span style={{ marginLeft: 6 }}>Free</span>
-            </button>
           </div>
 
-          <div style={{ marginTop: 56, display: "flex", gap: 40, color: "var(--ink-soft)", fontSize: 13 }}>
-            <ALandingPoint num="01" t="Tell us a little about your parent" />
-            <ALandingPoint num="02" t="Speak with Soumyajit, one-to-one" />
-            <ALandingPoint num="03" t="Receive a written care summary" />
+          <div style={{ marginTop: 56, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, color: "var(--ink-soft)", fontSize: 13 }}>
+            <ALandingPoint num="01" t="Tell us a little about your parent" onClick={() => go("brief")} />
+            <ALandingPoint num="02" t="Speak with Soumyajit, one-to-one" onClick={() => go("brief")} />
+            <ALandingPoint num="03" t="Receive a written care summary" onClick={() => go("brief")} />
           </div>
         </div>
 
         <div style={{ position: "relative" }}>
-          <div style={{
-            position: "relative", width: "100%", aspectRatio: "4 / 5",
-            borderRadius: 28, overflow: "hidden",
-            boxShadow: "var(--shadow)",
-            border: "1px solid rgba(0,0,0,0.04)",
+          <button type="button" onClick={() => go("brief")} className="btn-hover" style={{
+            display: "block", padding: 0, border: "none", background: "transparent",
+            cursor: "pointer", width: "100%", textAlign: "left",
           }}>
-            <AvatarPortrait name="Soumyajit" />
             <div style={{
-              position: "absolute", left: 0, right: 0, bottom: 0,
-              padding: "22px 26px",
-              background: "linear-gradient(0deg, rgba(20,30,28,0.72) 0%, transparent 100%)",
-              color: "#f7f2e6",
+              position: "relative", width: "100%", aspectRatio: "4 / 5",
+              borderRadius: 28, overflow: "hidden",
+              boxShadow: "var(--shadow)",
+              border: "1px solid rgba(0,0,0,0.04)",
             }}>
-              <div className="serif" style={{ fontSize: 28, lineHeight: 1.1 }}>Soumyajit</div>
-              <div style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>
-                Senior Care Advisor · with Emoha since 2019
+              <AvatarPortrait name="Soumyajit" />
+              <div style={{
+                position: "absolute", left: 0, right: 0, bottom: 0,
+                padding: "22px 26px",
+                background: "linear-gradient(0deg, rgba(20,30,28,0.72) 0%, transparent 100%)",
+                color: "#f7f2e6",
+              }}>
+                <div className="serif" style={{ fontSize: 28, lineHeight: 1.1 }}>Soumyajit</div>
+                <div style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>
+                  Senior Care Advisor · with Emoha since 2019
+                </div>
               </div>
             </div>
-          </div>
-          <div style={{
+          </button>
+          <button type="button" onClick={() => go("brief")} className="btn-hover" style={{
             position: "absolute", bottom: -16, right: -16,
             background: "var(--card)", padding: "14px 18px",
             borderRadius: 14, boxShadow: "0 14px 36px -18px rgba(0,0,0,0.2)",
             border: "1px solid var(--line)",
             maxWidth: 220, fontSize: 13, lineHeight: 1.45,
+            textAlign: "left", cursor: "pointer",
           }}>
             <div className="serif" style={{ fontSize: 14, marginBottom: 4, color: "var(--accent-deep)" }}>
               Available now
@@ -182,18 +182,26 @@ function ALanding({ go }) {
             <div style={{ color: "var(--ink-soft)" }}>
               No appointment needed. Just tap when you're ready.
             </div>
-          </div>
+          </button>
         </div>
       </div>
     </div>
   );
 }
-function ALandingPoint({ num, t }) {
+function ALandingPoint({ num, t, onClick }) {
   return (
-    <div style={{ flex: 1 }}>
+    <button type="button" onClick={onClick} className="btn-hover" style={{
+      flex: 1, textAlign: "left",
+      padding: "16px 18px",
+      borderRadius: 16,
+      background: "var(--card)",
+      border: "1px solid var(--line)",
+      cursor: onClick ? "pointer" : "default",
+      transition: "all 0.16s ease",
+    }}>
       <div className="mono" style={{ fontSize: 11, color: "var(--accent)", marginBottom: 6 }}>{num}</div>
-      <div style={{ color: "var(--ink)" }}>{t}</div>
-    </div>
+      <div style={{ color: "var(--ink)", lineHeight: 1.4 }}>{t}</div>
+    </button>
   );
 }
 
@@ -484,16 +492,19 @@ function CloneTile({ advisor, onCloned, clonedPersonas }) {
       padding: 22, display: "flex", flexDirection: "column", gap: 12,
       background: "transparent", border: "1px dashed var(--line)",
     }}>
-      <div className="serif" style={{ fontSize: 18 }}>Use your own voice</div>
+      <div className="serif" style={{ fontSize: 18 }}>
+        Make the advisor speak in your voice
+      </div>
       <div style={{ fontSize: 13, color: "var(--ink-soft)", lineHeight: 1.5 }}>
-        Upload a 10–30 second clip — the advisor you have selected ({advisor}) will speak in that voice for this call.
+        Upload a 10–30 second clip. The advisor will <strong>look exactly the
+        same</strong> — only the voice changes to match the clip you upload.
       </div>
       <input ref={fileRef} type="file" accept="audio/*" style={{ display: "none" }}
              onChange={(e) => upload(e.target.files?.[0])} />
       <button className="btn-ghost btn-hover" style={{ padding: "10px 16px", fontSize: 13, alignSelf: "flex-start" }}
               onClick={() => fileRef.current?.click()}>
         {status === "uploading" ? "Cloning your voice…"
-          : status === "done" ? `Cloned for ${advisor}` : "Upload a clip"}
+          : status === "done" ? `Voice cloned — same advisor, your voice` : "Upload my voice"}
       </button>
       {status && status.startsWith("error") && (
         <div style={{ fontSize: 12, color: "var(--warm)" }}>{status}</div>
@@ -874,6 +885,9 @@ function ACall({ brief, advisor, insightVisible, avatarShape, conversationId, on
 function ASummary({ brief, conversationId, go }) {
   const [summary, setSummary] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
+  const [comingSoonOpen, setComingSoonOpen] = React.useState(false);
+  const [downloadingPdf, setDownloadingPdf] = React.useState(false);
+  const summaryRef = React.useRef(null);
 
   React.useEffect(() => {
     if (!conversationId) { setLoading(false); return; }
@@ -882,6 +896,38 @@ function ASummary({ brief, conversationId, go }) {
       .then((data) => { setSummary(data); setLoading(false); })
       .catch(() => setLoading(false));
   }, [conversationId]);
+
+  const downloadPdf = async () => {
+    const el = summaryRef.current;
+    if (!el) return;
+    if (!window.html2pdf) {
+      alert("PDF library still loading — try again in a moment.");
+      return;
+    }
+    setDownloadingPdf(true);
+    // Show the letterhead during capture (it's display:none on screen)
+    document.body.classList.add("emoha-pdf-capturing");
+    try {
+      const fname = `emoha-care-summary-${(brief.caller_name || "you").toLowerCase().replace(/\s+/g, "-")}.pdf`;
+      await window.html2pdf().set({
+        margin: [12, 12, 12, 12],
+        filename: fname,
+        image: { type: "jpeg", quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#fbf8f1" },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak: { mode: ["css", "legacy"] },
+      }).from(el).save();
+    } finally {
+      document.body.classList.remove("emoha-pdf-capturing");
+      setDownloadingPdf(false);
+    }
+  };
+
+  const printSummary = () => {
+    // CSS @media print rules in style.css strip the non-summary chrome and
+    // add the Emoha letterhead. Native print dialog also offers "Save as PDF".
+    window.print();
+  };
 
   // Trust the backend when it has *real* data; show honest empty states otherwise.
   const realScore = summary?.risk_indicators?.care_confidence_score; // null when no assess_care_risk
@@ -912,7 +958,22 @@ function ASummary({ brief, conversationId, go }) {
 
   return (
     <div className="screen" style={{ padding: "var(--pad-y) var(--pad-x)" }}>
-      <div style={{ maxWidth: 1080, margin: "0 auto" }}>
+      <div ref={summaryRef} id="emoha-summary-printable" style={{ maxWidth: 1080, margin: "0 auto" }}>
+        {/* Letterhead — only visible when printing / in the generated PDF */}
+        <div className="emoha-print-letterhead" aria-hidden style={{ display: "none" }}>
+          <div className="lh-brand">
+            <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden>
+              <path d="M16 4 Q 26 12 26 22 Q 26 28 16 28 Q 6 28 6 22 Q 6 12 16 4 Z" fill="#1d2a2a" />
+              <circle cx="16" cy="20" r="3.5" fill="#fbf8f1" />
+            </svg>
+            <div>
+              <div className="serif lh-name">emoha</div>
+              <div className="lh-tag">care advisor — written summary</div>
+            </div>
+          </div>
+          <div className="lh-meta">{formatTime(new Date())}</div>
+        </div>
+
         <div className="mono" style={{
           fontSize: 11, letterSpacing: "0.18em", color: "var(--ink-mute)", textTransform: "uppercase",
           marginBottom: 14, display: "flex", alignItems: "center", gap: 10,
@@ -1162,8 +1223,10 @@ function ASummary({ brief, conversationId, go }) {
                 If someone else helps with care, they should see this too.
               </p>
               <div style={{ display: "flex", gap: 6 }}>
-                <button className="btn-ghost btn-hover" style={{ padding: "8px 12px", fontSize: 12.5 }}>Send via WhatsApp</button>
-                <button className="btn-ghost btn-hover" style={{ padding: "8px 12px", fontSize: 12.5 }}>Send via email</button>
+                <button className="btn-ghost btn-hover" style={{ padding: "8px 12px", fontSize: 12.5 }}
+                        onClick={() => setComingSoonOpen(true)}>Send via WhatsApp</button>
+                <button className="btn-ghost btn-hover" style={{ padding: "8px 12px", fontSize: 12.5 }}
+                        onClick={() => setComingSoonOpen(true)}>Send via email</button>
               </div>
             </div>
           </div>
@@ -1178,8 +1241,12 @@ function ASummary({ brief, conversationId, go }) {
             ← Start a new conversation
           </button>
           <div style={{ display: "flex", gap: 8 }}>
-            <button className="btn-ghost btn-hover" style={{ padding: "10px 16px", fontSize: 13 }}>Download as PDF</button>
-            <button className="btn-ghost btn-hover" style={{ padding: "10px 16px", fontSize: 13 }}>Print</button>
+            <button className="btn-ghost btn-hover" onClick={downloadPdf} disabled={downloadingPdf}
+                    style={{ padding: "10px 16px", fontSize: 13, opacity: downloadingPdf ? 0.6 : 1 }}>
+              {downloadingPdf ? "Generating PDF…" : "Download as PDF"}
+            </button>
+            <button className="btn-ghost btn-hover" onClick={printSummary}
+                    style={{ padding: "10px 16px", fontSize: 13 }}>Print</button>
           </div>
         </div>
 
@@ -1195,6 +1262,39 @@ function ASummary({ brief, conversationId, go }) {
           </div>
         </div>
       </div>
+
+      {comingSoonOpen && (
+        <div onClick={() => setComingSoonOpen(false)} style={{
+          position: "fixed", inset: 0, zIndex: 100,
+          background: "rgba(20,30,28,0.42)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: 20, animation: "emoha-fade 0.18s ease",
+        }}>
+          <div onClick={(e) => e.stopPropagation()} className="card" style={{
+            maxWidth: 380, padding: 28, textAlign: "center",
+            boxShadow: "0 30px 60px -30px rgba(20,30,28,0.5)",
+          }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: 999,
+              background: "rgba(59,106,99,0.12)", color: "var(--accent)",
+              display: "grid", placeItems: "center", margin: "0 auto 14px",
+              fontSize: 22,
+            }}>✉</div>
+            <div className="serif" style={{ fontSize: 22, lineHeight: 1.25, marginBottom: 8 }}>
+              Sharing is coming soon
+            </div>
+            <p style={{ fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.55, margin: "0 0 18px" }}>
+              We're polishing WhatsApp + email sharing for families.
+              For now, "Download as PDF" or "Print" will give you a copy you
+              can pass along.
+            </p>
+            <button className="btn-primary btn-hover" onClick={() => setComingSoonOpen(false)}
+                    style={{ padding: "10px 20px", fontSize: 14 }}>
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
