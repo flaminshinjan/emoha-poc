@@ -108,8 +108,13 @@ function ScoreRing({ value = 6, max = 10, size = 96, stroke = 8, color = "var(--
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const offset = c - (value / max) * c;
+  // viewBox is critical: lets the SVG (and its inner circles) scale uniformly
+  // when CSS resizes the element on mobile. Without it, shrinking the <svg>
+  // clips the arc since the circles' cx/cy/r are absolute.
   return (
-    <svg className="score-ring" width={size} height={size}>
+    <svg className="score-ring" width={size} height={size}
+         viewBox={`0 0 ${size} ${size}`}
+         preserveAspectRatio="xMidYMid meet">
       <circle className="bg" cx={size/2} cy={size/2} r={r} stroke="rgba(0,0,0,0.08)" strokeWidth={stroke} fill="none" />
       <circle className="fg" cx={size/2} cy={size/2} r={r} stroke={color} strokeWidth={stroke}
               fill="none" strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" />

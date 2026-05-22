@@ -468,8 +468,8 @@ input, textarea, select {
   .dir-a button.btn-primary { padding: 12px 20px; font-size: 14px; }
   .dir-a button.btn-ghost { padding: 12px 18px; font-size: 14px; }
 
-  /* Score ring + emotional arc sit better stacked. */
-  .score-ring { width: 100px !important; height: 100px !important; }
+  /* Score ring scales via its viewBox now; just cap the rendered size. */
+  .score-ring { max-width: 110px; max-height: 110px; width: 100%; height: auto; }
 }
 
 /* --- Reduce avatar tile height on short screens (e.g. landscape phones) --- */

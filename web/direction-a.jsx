@@ -736,9 +736,11 @@ function ACall({ brief, advisor, insightVisible, avatarShape, conversationId, on
           <div className={`speak-ring ${speaking && !muted ? "active" : ""}`}></div>
 
           {/* Avatar-unavailable banner: shown when no Tavus video arrives.
-              Most common cause is the Tavus account running out of credits;
-              we degrade gracefully to voice-only and tell the caller. */}
-          {avatarUnavailable && (
+              The `!hasRemoteVideo` guard is defensive — if a video track is
+              actually playing, never show this banner regardless of how the
+              watchdog state got into trouble (e.g. track flicker that fired
+              the timeout before video stabilised). */}
+          {avatarUnavailable && !hasRemoteVideo && (
             <div style={{
               position: "absolute", left: 16, right: 16, top: 16,
               padding: "10px 14px",
