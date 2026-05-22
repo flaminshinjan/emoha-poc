@@ -400,3 +400,81 @@ input, textarea, select {
 .score-ring { transform: rotate(-90deg); }
 .score-ring circle.bg { stroke: rgba(0,0,0,0.08); }
 .score-ring circle.fg { transition: stroke-dashoffset 1.2s ease-out; }
+
+/* ============================================================
+   MOBILE RESPONSIVENESS
+   ============================================================
+   Strategy: at narrower viewports we (a) tighten padding via the
+   density vars used everywhere, (b) collapse any inline 2- or 3-
+   column grid to a single column, (c) shrink the avatar tile so
+   it doesn't crowd the screen, (d) let transcript bubbles take
+   more width since the panel itself is narrower.
+
+   The JSX uses inline `grid-template-columns`, so to override
+   from CSS we target by structural selector. All the multi-col
+   layouts are flat `.screen > div > div` arrangements. */
+
+/* --- Tablet and below --- */
+@media (max-width: 900px) {
+  .density-roomy { --pad-x: 24px; --pad-y: 24px; --gap-lg: 28px; }
+  .density-cozy  { --pad-x: 18px; --pad-y: 18px; --gap-lg: 20px; }
+
+  /* Collapse every multi-column grid inside any screen to a single column. */
+  .screen [style*="grid-template-columns"],
+  .screen [style*="gridTemplateColumns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Header tightens up — keep the emergency button visible but compact. */
+  .proto header {
+    padding: 14px 18px !important;
+  }
+  .proto header .serif {
+    font-size: 14px !important;
+  }
+}
+
+/* --- Phone --- */
+@media (max-width: 600px) {
+  .density-roomy { --pad-x: 16px; --pad-y: 18px; --gap-lg: 20px; }
+  .density-cozy  { --pad-x: 14px; --pad-y: 14px; --gap-lg: 16px; }
+
+  /* The call screen hero already has its own max-width, so it stays a
+     comfortable square. Reduce the cap slightly so the controls stay
+     visible above the fold on a phone. */
+  .proto-frame [data-emoha-hero] {
+    max-width: 100% !important;
+    max-height: 50vh !important;
+  }
+
+  /* Big headlines have huge clamp() upper bounds — keep the floors. */
+  .proto h1, .proto h2 {
+    font-size: clamp(24px, 7vw, 30px) !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  /* Transcript bubble can take more width on a narrow screen. */
+  .bubble { max-width: 92%; font-size: 13.5px; padding: 8px 12px; }
+
+  /* Brief inputs feel cramped at 22px on small screens; bump down. */
+  .dir-a input[type="text"],
+  .dir-a input:not([type]),
+  .dir-a textarea { font-size: 17px; }
+
+  /* Step pill: smaller chips so they don't wrap weirdly. */
+  .dir-a .chip { padding: 8px 12px; font-size: 13px; }
+
+  /* Buttons feel chunky on phones — tighten. */
+  .dir-a button.btn-primary { padding: 12px 20px; font-size: 14px; }
+  .dir-a button.btn-ghost { padding: 12px 18px; font-size: 14px; }
+
+  /* Score ring + emotional arc sit better stacked. */
+  .score-ring { width: 100px !important; height: 100px !important; }
+}
+
+/* --- Reduce avatar tile height on short screens (e.g. landscape phones) --- */
+@media (max-height: 600px) {
+  .proto-frame [data-emoha-hero] {
+    max-height: 60vh !important;
+  }
+}

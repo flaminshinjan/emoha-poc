@@ -498,6 +498,10 @@ function ACall({ brief, advisor, insightVisible, avatarShape, conversationId, on
   const [connectStatus, setConnectStatus] = React.useState("starting"); // starting | connecting | live | error
   const [errorMsg, setErrorMsg] = React.useState(null);
   const [hasRemoteVideo, setHasRemoteVideo] = React.useState(false);
+  // If no video arrives within ~10s of going live, the avatar service is
+  // unavailable (out of credits / setup error / etc). We surface a banner so
+  // the caller knows the call is still working as voice-only.
+  const [avatarUnavailable, setAvatarUnavailable] = React.useState(false);
 
   const videoRef = React.useRef(null);
   const audioRef = React.useRef(null);
@@ -513,6 +517,19 @@ function ACall({ brief, advisor, insightVisible, avatarShape, conversationId, on
     const t = setInterval(() => setInsightPhase((p) => Math.min(p + 1, 4)), 5500);
     return () => clearInterval(t);
   }, []);
+  // Watchdog: if we've been connected for 10s and still no remote video,
+  // assume the avatar service is unavailable (Tavus credits / setup error).
+  React.useEffect(() => {
+    if (connectStatus !== "live" || hasRemoteVideo) return;
+    const t = setTimeout(() => {
+      if (!hasRemoteVideo) setAvatarUnavailable(true);
+    }, 10000);
+    return () => clearTimeout(t);
+  }, [connectStatus, hasRemoteVideo]);
+  // Clear the banner if video does eventually arrive (race / slow setup).
+  React.useEffect(() => {
+    if (hasRemoteVideo) setAvatarUnavailable(false);
+  }, [hasRemoteVideo]);
 
   // Start a Daily session and join the room created by /avatar/session.
   React.useEffect(() => {
@@ -672,7 +689,7 @@ function ACall({ brief, advisor, insightVisible, avatarShape, conversationId, on
             NOTE: `width: 100%` with `maxWidth` is essential — `width: auto`
             on this div collapses it to 0 because there's no intrinsic
             content sizing it (the <video> inside is absolutely positioned). */}
-        <div ref={heroRef} style={{
+        <div ref={heroRef} data-emoha-hero style={{
           position: "relative",
           borderRadius: 28,
           overflow: "hidden",
@@ -717,6 +734,34 @@ function ACall({ brief, advisor, insightVisible, avatarShape, conversationId, on
           }} />
 
           <div className={`speak-ring ${speaking && !muted ? "active" : ""}`}></div>
+
+          {/* Avatar-unavailable banner: shown when no Tavus video arrives.
+              Most common cause is the Tavus account running out of credits;
+              we degrade gracefully to voice-only and tell the caller. */}
+          {avatarUnavailable && (
+            <div style={{
+              position: "absolute", left: 16, right: 16, top: 16,
+              padding: "10px 14px",
+              borderRadius: 12,
+              background: "rgba(200,116,86,0.92)",
+              color: "#fff8f1",
+              fontSize: 12.5, lineHeight: 1.45,
+              boxShadow: "0 8px 24px -10px rgba(0,0,0,0.4)",
+              display: "flex", alignItems: "center", gap: 10,
+              zIndex: 5,
+            }}>
+              <span style={{
+                width: 18, height: 18, borderRadius: 999, flexShrink: 0,
+                background: "rgba(255,255,255,0.18)",
+                display: "grid", placeItems: "center",
+                fontSize: 11, fontWeight: 600,
+              }}>!</span>
+              <span>
+                <strong>Video advisor unavailable.</strong> Likely the avatar service
+                is out of credits — voice will continue working normally.
+              </span>
+            </div>
+          )}
 
           {/* Top bar (status + timer) — subtler, frosted, smaller */}
           <div style={{
