@@ -245,15 +245,28 @@ async def voice_clone(
     mode: str = Form("stability"),
     clip: UploadFile = File(..., description="10–30s audio sample (wav/mp3/m4a)"),
 ):
+    from .cartesia_cloning import CartesiaError
+
     audio_bytes = await clip.read()
     if not audio_bytes:
         raise HTTPException(400, "empty audio upload")
-    voice = await clone_from_clip(
-        audio_bytes=audio_bytes,
-        name=name,
-        description=description,
-        mode=mode,
-    )
+    try:
+        voice = await clone_from_clip(
+            audio_bytes=audio_bytes,
+            name=name,
+            description=description,
+            mode=mode,
+        )
+    except CartesiaError as e:
+        # Surface the actual Cartesia error to the client so the user sees
+        # the real reason — usually "Feature not available on the free tier",
+        # an over-quota notice, or an invalid clip. Status 402 maps naturally
+        # to subscription/billing issues; 400 for everything else.
+        msg = str(e)
+        status = 402 if "subscription" in msg.lower() or "free tier" in msg.lower() else 400
+        # Strip the "cartesia clone failed: " prefix we added in the lib.
+        clean = msg.replace("cartesia clone failed: ", "").strip()
+        raise HTTPException(status, clean)
     REGISTRY.add(persona, voice)
     logger.info(f"voice cloned persona={persona} voice_id={voice.voice_id}")
     return {

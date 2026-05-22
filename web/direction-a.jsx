@@ -456,7 +456,21 @@ function CloneTile({ advisor, onCloned, clonedPersonas }) {
     fd.append("clip", file);
     try {
       const r = await fetch(`${API_BASE}/voice/clone`, { method: "POST", body: fd });
-      if (!r.ok) throw new Error(await r.text());
+      if (!r.ok) {
+        // FastAPI HTTPException returns {"detail": "..."}; raw responses may
+        // just be text. Try JSON first, fall back to text.
+        let msg = `request failed (${r.status})`;
+        try {
+          const body = await r.json();
+          msg = body?.detail || msg;
+        } catch (_) {
+          try { msg = (await r.text()) || msg; } catch (_) {}
+        }
+        if (r.status === 402) {
+          throw new Error("Voice cloning requires a paid Cartesia plan. Upgrade at play.cartesia.ai/subscription, or skip this and Raj will speak in his default voice.");
+        }
+        throw new Error(msg);
+      }
       const out = await r.json();
       onCloned(advisor, out);
       setStatus("done");
