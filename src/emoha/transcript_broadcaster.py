@@ -15,7 +15,9 @@ from typing import Any
 
 from loguru import logger
 from pipecat.frames.frames import (
+    BotStoppedSpeakingFrame,
     Frame,
+    LLMFullResponseEndFrame,
     OutputTransportMessageFrame,
     TranscriptionFrame,
     TTSTextFrame,
@@ -46,13 +48,17 @@ class TranscriptBroadcaster(FrameProcessor):
     def __init__(self, conversation_id: str | None = None) -> None:
         super().__init__()
         self._conversation_id = conversation_id
+        # TTS in pipecat 1.x emits a TTSTextFrame *per token*, so naively
+        # broadcasting each one produces word-soup. We buffer the bot's
+        # tokens and flush as one line on the next BotStoppedSpeakingFrame
+        # or LLMFullResponseEndFrame — whichever lands first.
+        self._bot_buffer: list[str] = []
 
     async def process_frame(self, frame: Frame, direction: FrameDirection) -> None:
         await super().process_frame(frame, direction)
 
         # `TranscriptionFrame` is the finalized transcript; the interim is
-        # `InterimTranscriptionFrame`. Trust the type, don't filter on a
-        # `finalized` attribute that may not be set.
+        # `InterimTranscriptionFrame`. Trust the type.
         if isinstance(frame, TranscriptionFrame):
             text = (frame.text or "").strip()
             if text:
@@ -60,13 +66,29 @@ class TranscriptBroadcaster(FrameProcessor):
                 self._persist("caller", text)
 
         elif isinstance(frame, TTSTextFrame):
-            text = (frame.text or "").strip()
-            if text:
-                await self._broadcast({"role": "advisor", "text": text})
-                self._persist("advisor", text)
+            chunk = (frame.text or "").strip()
+            if chunk:
+                self._bot_buffer.append(chunk)
+
+        elif isinstance(frame, (BotStoppedSpeakingFrame, LLMFullResponseEndFrame)):
+            await self._flush_bot_buffer()
 
         # Always forward — we're a passive observer, not a gate.
         await self.push_frame(frame, direction)
+
+    async def _flush_bot_buffer(self) -> None:
+        if not self._bot_buffer:
+            return
+        line = " ".join(self._bot_buffer).strip()
+        # Tidy doubled spaces / spaces before punctuation that arise from
+        # tokenwise concatenation.
+        import re
+        line = re.sub(r"\s+([.,!?;:])", r"\1", line)
+        line = re.sub(r"\s+", " ", line)
+        self._bot_buffer.clear()
+        if line:
+            await self._broadcast({"role": "advisor", "text": line})
+            self._persist("advisor", line)
 
     def _persist(self, role: str, text: str) -> None:
         if not self._conversation_id:
